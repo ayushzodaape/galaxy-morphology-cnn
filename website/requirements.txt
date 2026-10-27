@@ -1,0 +1,9 @@
+# Galaxy Morphology CNN — requirements
+# CPU-only torch: the --extra-index-url line makes pip fetch the CPU wheel
+# instead of the huge CUDA wheel.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.14.1+cpu
+Flask>=3.0.0
+Pillow>=10.0.0
+numpy>=1.26.0
+gunicorn>=21.0.0
