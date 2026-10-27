@@ -1,0 +1,72 @@
+{
+  "source": "Galaxy10 DECaLS (Zenodo record 10845026, https://zenodo.org/records/10845026/files/Galaxy10_DECals.h5)",
+  "source_note": "Images from DESI Legacy Imaging Surveys; labels from Galaxy Zoo.",
+  "full_dataset_images": 17736,
+  "num_classes": 10,
+  "class_names": [
+    "Disturbed",
+    "Merging",
+    "Round Smooth",
+    "In-between Round Smooth",
+    "Cigar Shaped Smooth",
+    "Barred Spiral",
+    "Unbarred Tight Spiral",
+    "Unbarred Loose Spiral",
+    "Edge-on without Bulge",
+    "Edge-on with Bulge"
+  ],
+  "subset_images": 2500,
+  "image_size": [
+    64,
+    64,
+    3
+  ],
+  "seed": 42,
+  "splits": {
+    "train": {
+      "count": 1750,
+      "per_class": {
+        "Disturbed": 106,
+        "Merging": 183,
+        "Round Smooth": 261,
+        "In-between Round Smooth": 200,
+        "Cigar Shaped Smooth": 33,
+        "Barred Spiral": 201,
+        "Unbarred Tight Spiral": 181,
+        "Unbarred Loose Spiral": 259,
+        "Edge-on without Bulge": 141,
+        "Edge-on with Bulge": 185
+      }
+    },
+    "val": {
+      "count": 375,
+      "per_class": {
+        "Disturbed": 23,
+        "Merging": 39,
+        "Round Smooth": 56,
+        "In-between Round Smooth": 43,
+        "Cigar Shaped Smooth": 7,
+        "Barred Spiral": 43,
+        "Unbarred Tight Spiral": 39,
+        "Unbarred Loose Spiral": 55,
+        "Edge-on without Bulge": 30,
+        "Edge-on with Bulge": 40
+      }
+    },
+    "test": {
+      "count": 375,
+      "per_class": {
+        "Disturbed": 23,
+        "Merging": 39,
+        "Round Smooth": 56,
+        "In-between Round Smooth": 43,
+        "Cigar Shaped Smooth": 7,
+        "Barred Spiral": 44,
+        "Unbarred Tight Spiral": 38,
+        "Unbarred Loose Spiral": 56,
+        "Edge-on without Bulge": 30,
+        "Edge-on with Bulge": 39
+      }
+    }
+  }
+}
