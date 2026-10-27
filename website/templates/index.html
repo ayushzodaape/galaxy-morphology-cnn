@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Galaxy Morphology CNN — Upload a galaxy, get its shape</title>
+<style>
+  :root {
+    --bg: #05060f;
+    --panel: #0d1024;
+    --line: #23264d;
+    --ink: #eef0ff;
+    --muted: #a3a8c7;
+    --faint: #6d7294;
+    --accent: #8b9dff;
+    --gold: #e8c15a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0 1rem 3rem;
+    font-family: ui-sans-system, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink); background: var(--bg);
+    background-image:
+      radial-gradient(1px 1px at 12% 18%, #fff 100%, transparent),
+      radial-gradient(1px 1px at 78% 8%, #fff 100%, transparent),
+      radial-gradient(1.5px 1.5px at 34% 42%, #cdd3ff 100%, transparent),
+      radial-gradient(1px 1px at 88% 32%, #fff 100%, transparent),
+      radial-gradient(1.5px 1.5px at 55% 12%, #fff 100%, transparent),
+      radial-gradient(1px 1px at 5% 55%, #cdd3ff 100%, transparent),
+      radial-gradient(1px 1px at 94% 62%, #fff 100%, transparent),
+      radial-gradient(1.5px 1.5px at 22% 78%, #fff 100%, transparent),
+      radial-gradient(1px 1px at 66% 88%, #cdd3ff 100%, transparent),
+      radial-gradient(1200px 500px at 80% -10%, rgba(79, 92, 229, 0.25), transparent 60%),
+      radial-gradient(900px 500px at 10% 0%, rgba(139, 92, 229, 0.18), transparent 60%);
+  }
+  .wrap { max-width: 860px; margin: 0 auto; position: relative; }
+  header { padding: 3rem 0 1.5rem; text-align: center; }
+  .eyebrow {
+    font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent); font-weight: 700; margin-bottom: 0.6rem;
+  }
+  h1 { font-size: 2.2rem; line-height: 1.15; margin: 0 0 0.6rem; letter-spacing: -0.02em; }
+  .sub { color: var(--muted); font-size: 1rem; line-height: 1.6; margin: 0 auto; max-width: 620px; }
+
+  #dropzone {
+    margin: 2rem 0 1.5rem; border: 2px dashed var(--line); border-radius: 20px;
+    background: rgba(13, 16, 36, 0.8); padding: 2.5rem 1.5rem; text-align: center;
+    cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  }
+  #dropzone:hover, #dropzone.dragover { border-color: var(--accent); background: rgba(29, 34, 84, 0.8); }
+  #dropzone p { margin: 0.3rem 0; }
+  #dropzone .big { font-size: 1.1rem; font-weight: 600; }
+  #dropzone .small { color: var(--muted); font-size: 0.9rem; }
+  #file-input { display: none; }
+
+  #result { display: none; }
+  .result-card {
+    background: #f4f5ff; color: #17171c; border-radius: 20px; padding: 1.5rem;
+    display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: flex-start;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  }
+  #preview { width: 280px; max-width: 100%; border-radius: 12px; display: block; }
+  .result-main { flex: 1; min-width: 240px; }
+  .result-label { font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: #5b5b6b; font-weight: 700; }
+  #predicted { font-size: 1.9rem; font-weight: 800; letter-spacing: -0.02em; margin: 0.3rem 0 1rem; color: #17171c; }
+  .bar-row { margin: 0.6rem 0; }
+  .bar-head { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.25rem; }
+  .bar-track { background: #dde0f5; border-radius: 999px; height: 10px; overflow: hidden; }
+  .bar-fill { background: #4f46e5; height: 100%; border-radius: 999px; }
+  #status { text-align: center; color: var(--muted); padding: 1rem; display: none; }
+  #error {
+    display: none; background: #3d1420; border: 1px solid #7a2b3d; color: #ffb4c2;
+    border-radius: 12px; padding: 0.9rem 1.2rem; margin: 1rem 0; text-align: center;
+  }
+
+  h2 { font-size: 1.3rem; margin: 2.5rem 0 1rem; }
+  .class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.75rem; }
+  .class-card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 0.9rem 1rem;
+  }
+  .class-card b { display: block; margin-bottom: 0.25rem; }
+  .class-card span { color: var(--muted); font-size: 0.88rem; line-height: 1.5; }
+  .honest-note {
+    margin-top: 2rem; border: 1px solid rgba(232, 193, 90, 0.4); border-radius: 14px;
+    padding: 1rem 1.25rem; background: rgba(232, 193, 90, 0.07); line-height: 1.6;
+    font-size: 0.93rem; color: #e9e2c8;
+  }
+  .honest-note b { color: var(--gold); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Galaxy10 DECaLS · Convolutional Neural Network</div>
+    <h1>What shape is this galaxy?</h1>
+    <p class="sub">Upload a galaxy image and a small CNN trained on real telescope
+    images will guess its morphology — spiral, elliptical, edge-on, merging, or disturbed.</p>
+  </header>
+
+  <div id="dropzone">
+    <p class="big">Drop a galaxy image here, or click to choose one</p>
+    <p class="small">PNG, JPG, or WebP — the image is resized to 64×64 for the model</p>
+    <input type="file" id="file-input" accept="image/*">
+  </div>
+
+  <div id="status">Classifying<span id="dots">…</span></div>
+  <div id="error"></div>
+
+  <div id="result">
+    <div class="result-card">
+      <img id="preview" alt="Uploaded galaxy">
+      <div class="result-main">
+        <div class="result-label">Predicted morphology</div>
+        <div id="predicted">—</div>
+        <div id="bars"></div>
+      </div>
+    </div>
+  </div>
+
+  <h2>The 10 morphology classes</h2>
+  <div class="class-grid">
+    <div class="class-card"><b>Disturbed</b><span>Irregular shape, signs of a past collision or disruption.</span></div>
+    <div class="class-card"><b>Merging</b><span>Two galaxies caught mid-collision, blending together.</span></div>
+    <div class="class-card"><b>Round Smooth</b><span>Round, featureless elliptical — no arms, no disc.</span></div>
+    <div class="class-card"><b>In-between Round Smooth</b><span>Between round and flattened — slightly elliptical, still smooth.</span></div>
+    <div class="class-card"><b>Cigar Shaped Smooth</b><span>Elongated, cigar-like elliptical with no spiral structure.</span></div>
+    <div class="class-card"><b>Barred Spiral</b><span>Spiral arms plus a straight bar of stars through the centre.</span></div>
+    <div class="class-card"><b>Unbarred Tight Spiral</b><span>Spiral arms wound tightly around the core, no bar.</span></div>
+    <div class="class-card"><b>Unbarred Loose Spiral</b><span>Spiral arms wound loosely in an open pattern, no bar.</span></div>
+    <div class="class-card"><b>Edge-on without Bulge</b><span>Disc seen exactly side-on, with no bright central bulge.</span></div>
+    <div class="class-card"><b>Edge-on with Bulge</b><span>Disc seen side-on with a bright central bulge.</span></div>
+  </div>
+
+  <div class="honest-note">
+    <b>Honest note:</b> this model was trained on a small 2,500-image subset
+    (12 epochs, CPU only) and scores <b>48.00% test accuracy</b> on 375 test images.
+    It is strongest on edge-on galaxies and weakest on disturbed ones — and a
+    photo that is not a galaxy at all will still get a label, which will be
+    meaningless. Treat every prediction as a guess with a confidence score, not a fact.
+  </div>
+</div>
+
+<script>
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('file-input');
+const result = document.getElementById('result');
+const preview = document.getElementById('preview');
+const predictedEl = document.getElementById('predicted');
+const barsEl = document.getElementById('bars');
+const statusEl = document.getElementById('status');
+const errorEl = document.getElementById('error');
+
+dropzone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) classify(fileInput.files[0]); });
+['dragenter', 'dragover'].forEach(ev => dropzone.addEventListener(ev, e => {
+  e.preventDefault(); dropzone.classList.add('dragover');
+}));
+['dragleave', 'drop'].forEach(ev => dropzone.addEventListener(ev, e => {
+  e.preventDefault(); dropzone.classList.remove('dragover');
+}));
+dropzone.addEventListener('drop', e => {
+  const file = e.dataTransfer.files[0];
+  if (file) classify(file);
+});
+
+async function classify(file) {
+  errorEl.style.display = 'none';
+  result.style.display = 'none';
+  statusEl.style.display = 'block';
+  preview.src = URL.createObjectURL(file);
+  const form = new FormData();
+  form.append('image', file);
+  let data;
+  try {
+    const res = await fetch('/predict', { method: 'POST', body: form });
+    data = await res.json();
+  } catch (e) {
+    showError('Could not reach the server. Is the app running?');
+    return;
+  }
+  statusEl.style.display = 'none';
+  if (data.error) { showError(data.error); return; }
+  predictedEl.textContent = data.predicted;
+  barsEl.innerHTML = data.top3.map(t => `
+    <div class="bar-row">
+      <div class="bar-head"><span>${escapeHtml(t.class)}</span><span>${(t.probability * 100).toFixed(1)}%</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(t.probability * 100).toFixed(1)}%"></div></div>
+    </div>`).join('');
+  result.style.display = 'block';
+  result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function showError(msg) {
+  statusEl.style.display = 'none';
+  errorEl.textContent = msg;
+  errorEl.style.display = 'block';
+}
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+</script>
+</body>
+</html>
